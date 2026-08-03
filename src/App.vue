@@ -9,6 +9,10 @@ import { enhanceMarkdownIt } from '@/lib/markdown-lines'
 import { loadPref, savePref } from '@/lib/prefs'
 import { useScrollSync } from '@/composables/useScrollSync'
 import { createEditorUndo } from '@/composables/useEditorUndo'
+import { createMarkdownKeys, type MarkdownKeysContext } from '@/composables/useMarkdownKeys'
+import type { EditResult } from '@/lib/markdown/line'
+import { setextToAtx } from '@/lib/markdown/heading-keys'
+import { getJumpTarget, organizeFootnotes, scrollEditorToOffset } from '@/lib/markdown/references'
 import {
   insertAtCursor,
   insertBlock,
@@ -28,6 +32,7 @@ const md = new MarkdownIt({ html: false, linkify: true, breaks: true })
 enhanceMarkdownIt(md)
 
 const editorUndo = createEditorUndo()
+const markdownKeys = createMarkdownKeys()
 
 const content = ref('# 欢迎使用 Marknote\n\n点击 **打开** 选择 Markdown 文件，或 **新建** 开始写作。\n\n- 左侧：修改历史树\n- 中间：编辑器\n- 右侧：实时预览\n\n按 `⌘S` 保存，每次保存会自动记录一个历史版本。')
 const filePath = ref<string | null>(null)
@@ -118,6 +123,7 @@ async function applyOpenResult(result: OpenResult) {
   previewNodeId.value = result.history.headId
   isDirty.value = false
   editorUndo.reset()
+  markdownKeys.resetJump()
   showStatus(`已打开 ${fileName(result.filePath)}`)
 }
 
@@ -147,6 +153,7 @@ function newFile() {
   content.value = '# 新文档\n\n开始写作吧…'
   isDirty.value = false
   editorUndo.reset()
+  markdownKeys.resetJump()
   showStatus('新建文档')
 }
 
@@ -223,6 +230,53 @@ async function saveClipboardImageBlob(blob: Blob): Promise<string | null> {
   } catch {
     return null
   }
+}
+
+function applyEditorFromResult(el: HTMLTextAreaElement, fn: () => EditResult | null): boolean {
+  const result = fn()
+  if (!result) return false
+  editorUndo.pushUndo(el, true)
+  el.value = result.newValue
+  el.setSelectionRange(result.selectionStart, result.selectionEnd)
+  setContentFromEditor(result.newValue)
+  return true
+}
+
+const markdownCtx: MarkdownKeysContext = {
+  getEditor: () => editorRef.value,
+  isReadonly: () => isPreviewingHistory.value,
+  applyEdit: applyEditorFromResult
+}
+
+function jumpReference() {
+  const el = editorRef.value
+  if (!el || isPreviewingHistory.value) return
+  const target = getJumpTarget(el.value, el.selectionStart)
+  if (!target) {
+    showStatus('此处无链接/脚注定义可跳转')
+    return
+  }
+  scrollEditorToOffset(el, target.start)
+  el.setSelectionRange(target.start, target.end)
+}
+
+function organizeFootnotesInEditor() {
+  withEditor((el) => {
+    const organized = organizeFootnotes(el.value)
+    if (organized !== el.value) {
+      el.value = organized
+    }
+  })
+}
+
+function convertSetextToAtx() {
+  withEditor((el) => {
+    const result = setextToAtx(el.value, el.selectionStart)
+    if (result) {
+      el.value = result.newValue
+      el.setSelectionRange(result.selectionStart, result.selectionEnd)
+    }
+  })
 }
 
 function applyEditorEdit(el: HTMLTextAreaElement, edit: () => void) {
@@ -312,6 +366,8 @@ function onEditorKeydown(event: KeyboardEvent) {
     editorUndo.redo(el, setContentFromEditor)
     return
   }
+
+  if (markdownKeys.handleKeydown(event, markdownCtx)) return
 
   if (event.key.length === 1 && !mod && !event.altKey) {
     editorUndo.markTypingSession(el)
@@ -429,6 +485,22 @@ function buildInsertMenu(): ContextMenuItem[] {
     {
       label: '脚注',
       action: () => withEditor((el) => insertAtCursor(el, '[^1]', true))
+    },
+    { divider: true, label: '' },
+    {
+      label: '跳转到链接/脚注',
+      shortcut: 'F12',
+      action: () => jumpReference()
+    },
+    {
+      label: '整理脚注',
+      shortcut: '⇧⌘F',
+      action: () => organizeFootnotesInEditor()
+    },
+    {
+      label: 'Setext → ATX 标题',
+      shortcut: '⌥⌘1',
+      action: () => convertSetextToAtx()
     }
   ]
 }
