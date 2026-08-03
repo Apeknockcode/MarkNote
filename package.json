@@ -1,0 +1,73 @@
+{
+  "name": "marknote",
+  "version": "1.0.0",
+  "description": "Marknote — 本地 Markdown 编辑器，带文档修改历史树",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "env -u ELECTRON_RUN_AS_NODE electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "env -u ELECTRON_RUN_AS_NODE electron-vite preview",
+    "icons": "bash scripts/generate-icons.sh",
+    "dist": "npm run dist:mac",
+    "dist:mac": "npm run icons && npm run build && electron-builder --mac",
+    "dist:win": "npm run icons && npm run build && electron-builder --win --x64",
+    "dist:win:zip": "npm run icons && npm run build && electron-builder --win --x64 --config.win.target=zip",
+    "dist:desktop": "npm run icons && npm run build && electron-builder --mac --win --x64"
+  },
+  "build": {
+    "appId": "com.marknote.app",
+    "productName": "Marknote",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "icon": "icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        "zip"
+      ],
+      "artifactName": "Marknote-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Marknote"
+    }
+  },
+  "dependencies": {
+    "markdown-it": "^14.1.0",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/turndown": "^5.0.6",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "electron": "^34.0.0",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "png-to-ico": "^2.1.8",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vue": "^3.5.13"
+  }
+}

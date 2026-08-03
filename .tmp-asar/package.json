@@ -1,0 +1,9 @@
+{
+  "name": "marknote",
+  "version": "1.0.0",
+  "description": "Marknote — 本地 Markdown 编辑器，带文档修改历史树",
+  "main": "out/main/index.js",
+  "dependencies": {
+    "markdown-it": "^14.1.0"
+  }
+}

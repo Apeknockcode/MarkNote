@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <clipPath id="squircle">
+      <rect width="1024" height="1024" rx="228"/>
+    </clipPath>
+    <radialGradient id="bg" cx="512" cy="512" r="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A1A28"/>
+      <stop offset="0.65" stop-color="#12121C"/>
+      <stop offset="1" stop-color="#08080E"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="312" y1="730" x2="712" y2="730" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6EB6FF" stop-opacity="0.15"/>
+      <stop offset="0.5" stop-color="#6EB6FF"/>
+      <stop offset="1" stop-color="#6EB6FF" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#squircle)">
+    <rect width="1024" height="1024" fill="url(#bg)"/>
+    <text
+      x="512"
+      y="512"
+      text-anchor="middle"
+      dominant-baseline="central"
+      fill="#F4F4F8"
+      font-family="SF Pro Display, Helvetica Neue, Arial, sans-serif"
+      font-size="680"
+      font-weight="700"
+      letter-spacing="-14"
+    >M</text>
+    <rect x="312" y="730" width="400" height="10" rx="5" fill="url(#accent)"/>
+  </g>
+</svg>
